@@ -1,0 +1,27 @@
+#!/usr/bin/with-contenv bash
+echo "${USER_NAME}:${USER_PASSWORD}" | chpasswd
+
+# symlink out ssh config directory
+if [ ! -L /etc/ssh ];then
+    ssh-keygen -A
+fi
+
+# disable password access
+sed -i '/^PasswordAuthentication/c\PasswordAuthentication no' /etc/ssh/sshd_config
+sed -i '/^PermitRootLogin/c\PermitRootLogin no' /etc/ssh/sshd_config
+echo "User/password ssh access is disabled."
+
+
+# set key auth in file
+
+if [ ! -f /root/.ssh/authorized_keys ];then
+    mkdir -p /root/.ssh
+    chmod 700 /root/.ssh
+    touch /root/.ssh/authorized_keys
+    chmod 600 /root/.ssh/authorized_keys
+fi
+
+[[ -n "$PUBLIC_KEY" ]] && \
+    [[ ! $(grep "${PUBLIC_KEY}" /root/.ssh/authorized_keys) ]] && \
+    echo "$PUBLIC_KEY" >> /root/.ssh/authorized_keys && \
+    echo "Public key from env variable added"
